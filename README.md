@@ -104,7 +104,7 @@ README.md
 
 ## Test Thumbnails
 
-A `test_thumbnails/` folder is included at the project root.  
+A `eval_thumbnails/` folder is included at the project root.  
 It contains PNG and JPG thumbnail examples that can be used to quickly test the reviewer without uploading your own images.
 
 You can upload any file from that folder through the Streamlit interface to confirm that the system works correctly.
