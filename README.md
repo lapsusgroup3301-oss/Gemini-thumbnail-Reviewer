@@ -1,79 +1,128 @@
-<p align="center">
-  <h1>Gemini Thumbnail Reviewer</h1>
-</p>
-
-<p align="center">
-  A multi-agent thumbnail analysis system built with FastAPI, Streamlit, and Google Gemini.
-</p>
+# 🚀 Gemini Thumbnail Reviewer
+A multi-agent YouTube thumbnail analysis system built with FastAPI, Streamlit, and Google Gemini.
 
 <p align="center">
   <img src="https://img.shields.io/badge/Python-3.10+-blue.svg">
   <img src="https://img.shields.io/badge/FastAPI-Backend-green.svg">
   <img src="https://img.shields.io/badge/Streamlit-Frontend-red.svg">
   <img src="https://img.shields.io/badge/Gemini-API-orange.svg">
-  <img src="https://img.shields.io/badge/License-GPLv3-lightgrey.svg">
+  <img src="https://img.shields.io/badge/Multi--Agent-System-purple.svg">
 </p>
 
 ---
 
 ## Overview
 
-Gemini Thumbnail Reviewer is a multi-agent system that evaluates YouTube thumbnails by combining heuristic scoring and Gemini-powered visual reasoning.  
-The backend runs on FastAPI and processes the analysis, while the frontend uses Streamlit to present clear, structured feedback.
+Gemini Thumbnail Reviewer is a full multi-agent system designed to evaluate and improve YouTube thumbnails.  
+It combines LLM-powered visual reasoning with deterministic heuristics, session memory, and a structured coaching agent.
 
-The project was created as part of the Google Generative AI Capstone.
+The system was built as part of the **Google Generative AI Agents Capstone**, which requires agents, tool use, memory, and observability.  
+This project satisfies those requirements fully while remaining lightweight and easy to run locally.
 
 ---
 
-## Features
+## Key Features
 
-- Vision analysis using Google Gemini  
-- Heuristic brightness, contrast and aspect-ratio scoring  
-- Coach agent that merges reasoning from all agents  
-- Per-session memory  
-- Lightweight logging and metrics  
-- Clean, interactive Streamlit UI  
-- Backend and frontend separated clearly  
+### 🔍 Vision Analysis (Gemini Vision)
+Automatically extracts:
+- subject & layout structure  
+- composition cues  
+- emotional tone  
+- color and lighting characteristics  
+- style tags  
+Used to understand *what the viewer actually sees* at a glance.
+
+### 📊 Heuristic Metrics
+Fast, deterministic scoring layer:
+- brightness  
+- contrast  
+- aspect ratio fit  
+- clarity markers  
+Acts as a sanity check on LLM outputs and improves consistency.
+
+### 🧠 Coach Agent (Gemini)
+A structured JSON-only agent that:
+- merges signals from all other agents  
+- scores quality (0–10)  
+- lists strengths and weaknesses  
+- gives specific improvement suggestions  
+- understands modern creator meta (MrBeast, Dhruv Rathee, Ryan Trahan…)  
+
+### 🔁 Engagement Prediction Agent
+Predicts CTR potential using:
+- heuristic score  
+- clarity metrics from vision  
+- density of coach insights  
+
+### 💾 Long-Term Memory
+Each session stores:
+- past thumbnails  
+- scores  
+- summaries  
+- patterns in creator preferences  
+
+This lets the system adapt to a creator’s style over time.
+
+### 📈 Observability
+Integrated:
+- structured logs  
+- timing metrics  
+- error-safe agent isolation  
+
+### 🖥 Clean Frontend/Backend Split
+- FastAPI backend for analysis  
+- Streamlit frontend for visualization  
+- Fully decoupled architecture  
 
 ---
 
 ## Architecture
 
 ```
-                ┌──────────────────────────┐
-                │       Streamlit UI       │
-                │  (upload, display data)  │
-                └─────────────┬────────────┘
-                              │
-                              ▼
-                ┌──────────────────────────┐
-                │        FastAPI API       │
-                │  /analyze endpoint       │
-                └─────────────┬────────────┘
-                              │
-       ┌──────────────────────┼────────────────────────┐
-       │                      │                        │
-       ▼                      ▼                        ▼
-┌───────────────┐     ┌───────────────┐       ┌────────────────┐
-│  Vision Agent  │     │ Heuristic     │       │  Coach Agent   │
-│  Gemini Model  │     │ Scoring       │       │ (Gemini)       │
-└───────────────┘     └───────────────┘       └────────────────┘
-       │                      │                        │
-       └──────────────────────┴─────────┬──────────────┘
-                                         ▼
-                         ┌──────────────────────────┐
-                         │ Combined Review Response │
-                         └──────────────────────────┘
+                      ┌──────────────────────────────┐
+                      │         Streamlit UI          │
+                      │    (upload + visualization)   │
+                      └──────────────┬───────────────┘
+                                     │
+                                     ▼
+                      ┌──────────────────────────────┐
+                      │           FastAPI             │
+                      │       /analyze endpoint       │
+                      └──────────────┬───────────────┘
+                                     │
+        ┌────────────────────────────┼──────────────────────────────┐
+        │                            │                              │
+        ▼                            ▼                              ▼
+┌────────────────┐        ┌───────────────────┐          ┌──────────────────────┐
+│ Vision Agent   │        │ Heuristic Agent  │          │ Coach Agent (Gemini) │
+│ (Gemini Vision)│        │ (Metrics Scoring)│          │ Multi-source Fusion   │
+└────────────────┘        └───────────────────┘          └──────────────────────┘
+        │                            │                              │
+        └────────────────────────────┴─────────────────────┬────────┘
+                                                           ▼
+                                               ┌────────────────────────┐
+                                               │ Engagement Agent       │
+                                               │ CTR Score Prediction   │
+                                               └────────────────────────┘
+                                                           │
+                                                           ▼
+                                                ┌─────────────────────────┐
+                                                │ Combined Review Output │
+                                                └─────────────────────────┘
 ```
 
 ---
 
-## Project structure
+## Project Structure
 
 ```
 backend/
   app/
     agents/
+      vision_agent.py
+      heuristic_agent.py
+      coach_agent.py
+      engagement_agent.py
     jobs/
     memory/
     ai_gemini.py
@@ -91,7 +140,6 @@ frontend/
 test_thumbnails/
   sample1.png
   sample2.jpg
-  sample3.png
   ...
 
 .env.example
@@ -104,10 +152,8 @@ README.md
 
 ## Test Thumbnails
 
-A `eval_thumbnails/` folder is included at the project root.  
-It contains PNG and JPG thumbnail examples that can be used to quickly test the reviewer without uploading your own images.
-
-You can upload any file from that folder through the Streamlit interface to confirm that the system works correctly.
+A `eval_thumbnails/` folder is included for quick evaluation.  
+You can upload these directly in the Streamlit UI to verify that the pipeline works correctly end-to-end.
 
 ---
 
@@ -125,14 +171,12 @@ cd Gemini-thumbnail-Reviewer
 ## 2. Create a virtual environment
 
 ### Windows
-
 ```
 python -m venv .venv
 .venv\Scripts\activate
 ```
 
 ### macOS / Linux
-
 ```
 python3 -m venv .venv
 source .venv/bin/activate
@@ -143,13 +187,11 @@ source .venv/bin/activate
 ## 3. Install dependencies
 
 ### Backend
-
 ```
 pip install -r backend/app/requirements.txt
 ```
 
 ### Frontend
-
 ```
 pip install -r frontend/requirements.txt
 ```
@@ -158,13 +200,11 @@ pip install -r frontend/requirements.txt
 
 ## 4. Setup environment variables
 
-Copy the example file:
-
 ```
 cp .env.example .env
 ```
 
-Then open `.env` and add your Gemini API key:
+Open `.env` and insert your Gemini key:
 
 ```
 GEMINI_API_KEY=your_key_here
@@ -172,7 +212,7 @@ GEMINI_API_KEY=your_key_here
 
 ---
 
-# Running the project
+# Running the Project
 
 ## Backend (FastAPI)
 
@@ -181,7 +221,7 @@ uvicorn backend.app.main:app --reload
 ```
 
 Runs at:
-http://127.0.0.1:8000
+http://127.0.0.1:8000  
 
 ---
 
@@ -194,35 +234,32 @@ streamlit run frontend/app.py
 Runs at:
 http://localhost:8501
 
-Start by uploading any image from the `test_thumbnails/` folder to confirm the pipeline is functioning.
+Upload any image from `eval_thumbnails/` to test the pipeline.
 
 ---
 
-# How it works
+# How It Works
 
-### Vision Agent
-Extracts visual features using Gemini (colors, subjects, theme cues, emotional tone).
+### Vision Agent  
+Gemini Vision model describes the visual scene, color, subjects, composition, and tags.
 
-### Heuristic Agent
-Computes:
-- brightness  
-- contrast  
-- aspect ratio fit  
-- clarity markers  
+### Heuristic Agent  
+Computes brightness, contrast, and aspect-ratio fitness.
 
-### Coach Agent
-Uses Gemini to produce:
+### Coach Agent  
+Combines all signals into a single structured review:
+- verdict  
 - strengths  
 - weaknesses  
-- improvement suggestions  
-- redesign prompts  
+- realistic improvements  
+- quality score  
 
-The backend merges agent results into a clean response, which the frontend displays.
+### Engagement Agent  
+Predicts performance potential using a blended scoring formula.
 
 ---
 
 # License
 
-This project is released under the GPL v3 license.  
+This project is licensed under GNU GPL v3.  
 See the LICENSE file for full terms.
-
