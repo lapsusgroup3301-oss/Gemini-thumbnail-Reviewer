@@ -119,12 +119,15 @@ Integrated:
 backend/
   app/
     agents/
-      vision_agent.py
-      heuristic_agent.py
       coach_agent.py
       engagement_agent.py
+      heuristic_agent.py
+      vision_agent.py
     jobs/
+      jobs.py
     memory/
+      memory.py
+      memory.store.json
     ai_gemini.py
     gemini_client.py
     logging_config.py
@@ -133,19 +136,15 @@ backend/
     scoring.py
     requirements.txt
 
+eval_thumbnails/
+  eval_labels.csv
+  README.md
+
 frontend/
   app.py
   requirements.txt
 
-test_thumbnails/
-  sample1.png
-  sample2.jpg
-  ...
-
 .env.example
-.gitignore
-LICENSE
-README.md
 ```
 
 ---
