@@ -1,11 +1,140 @@
 import requests
-
+import os
+import re
+from pathlib import Path
+import streamlit as st
+import runpy
 import streamlit as st
 
 API_BASE = "http://127.0.0.1:8000"
 API_ANALYZE = f"{API_BASE}/api/v1/thumbnail/analyze"
 
 PAGE_TITLE = "Thumbnail Reviewer · Gemini Agent"
+
+# paths
+HERE = Path(__file__).resolve().parent
+ENV_PATH = HERE.parent / ".env"
+PROJECT_ROOT = HERE.parent
+ENV_EXAMPLE_PATH = PROJECT_ROOT / ".env.example"
+
+
+GEMINI_KEY_NAME = "GEMINI_API_KEY"
+PLACEHOLDER_VALUES = {"", "your_key_here", "YOUR_KEY_HERE", "your_key", "replace_me"}
+
+def read_text(path: Path):
+    try:
+        return path.read_text(encoding="utf-8")
+    except:
+        return None
+
+def write_text(path: Path, txt: str):
+    path.write_text(txt, encoding="utf-8")
+
+def extract_key(contents: str | None):
+    if not contents:
+        return None
+    for line in contents.splitlines():
+        line = line.strip()
+        if line.startswith(f"{GEMINI_KEY_NAME}="):
+            return line.split("=", 1)[1].strip()
+    return None
+
+def save_env_from_example(user_key: str):
+    if not ENV_EXAMPLE_PATH.exists():
+        raise FileNotFoundError(".env.example is missing")
+
+    example_text = read_text(ENV_EXAMPLE_PATH)
+    if example_text is None:
+        raise RuntimeError(".env.example unreadable")
+
+    # remove old .env if present
+    if ENV_PATH.exists():
+        try:
+            ENV_PATH.unlink()
+        except Exception:
+            # ignore unlink errors and try to overwrite by write_text
+            pass
+
+    pattern = re.compile(rf"^{GEMINI_KEY_NAME}\s*=.*$", flags=re.MULTILINE)
+    new_line = f"{GEMINI_KEY_NAME}={user_key}"
+
+    if pattern.search(example_text):
+        new_contents = pattern.sub(new_line, example_text)
+    else:
+        new_contents = example_text + ("\n" if not example_text.endswith("\n") else "") + new_line + "\n"
+
+    write_text(ENV_PATH, new_contents)
+
+# ---------- startup check ----------
+env_contents = read_text(ENV_PATH)
+current_key = extract_key(env_contents)
+needs_key = current_key is None or current_key in PLACEHOLDER_VALUES
+
+if needs_key:
+    # Set a minimal page config so modal-looking UI centers nicely
+    try:
+        st.set_page_config(page_title="API Key Required", layout="centered")
+    except Exception:
+        # older streamlit may throw if page_config already set; ignore
+        pass
+
+    # Simple, clear blocking UI (works for all Streamlit versions)
+    st.markdown("<br><br>", unsafe_allow_html=True)
+    st.markdown("<h2 style='text-align:center;'>Gemini API Key required</h2>", unsafe_allow_html=True)
+    st.markdown(
+        """
+        <div style="max-width:820px;margin-left:auto;margin-right:auto;">
+        <p>
+        The app needs a valid <code>GEMINI_API_KEY</code> in <code>.env</code>.
+        You can paste your key below. The script will create/overwrite <code>.env</code>
+        from <code>.env.example</code>, preserving all other variables and replacing only
+        the <code>GEMINI_API_KEY</code> value.
+        </p>
+        </div>
+        """,
+        unsafe_allow_html=True,
+    )
+    st.markdown(
+    "<p style='text-align:center;color:gray;'>Your API key is stored locally in the .env file and never sent to any external server.</p>",
+    unsafe_allow_html=True
+    )
+
+    key_input = st.text_input("Enter your Gemini API Key", type="password", key="gemini_input")
+
+    c1, c2, c3 = st.columns([1, 1, 1])
+    with c1:
+        if st.button("Save & Continue"):
+            if not key_input or not key_input.strip():
+                st.error("API key cannot be empty.")
+            else:
+                try:
+                    save_env_from_example(key_input.strip())
+                    st.success("Saved! The app will reload now.")
+                    st.experimental_rerun()
+                except Exception as e:
+                    st.error(f"Failed to save key: {e}")
+    with c2:
+        if st.button("I already have .env (re-check)"):
+            # re-check .env in case user created it externally
+            env_contents = read_text(ENV_PATH)
+            current_key = extract_key(env_contents)
+            if current_key and current_key not in PLACEHOLDER_VALUES:
+                os.environ[GEMINI_KEY_NAME] = current_key
+                st.success("Found valid key in .env. Reloading app.")
+                st.experimental_rerun()
+            else:
+                st.warning("No valid key detected in .env. Please paste your key or follow README.")
+    with c3:
+        if st.button("Cancel"):
+            st.info("The app is blocked until a valid GEMINI_API_KEY is provided.")
+
+    # Block the rest of the app until key is set.
+    st.stop()
+
+# If key exists, load into environment for downstream code
+existing_key = extract_key(read_text(ENV_PATH))
+if existing_key:
+    os.environ[GEMINI_KEY_NAME] = existing_key
 
 st.set_page_config(
     page_title=PAGE_TITLE,
@@ -292,7 +421,7 @@ with left:
     )
 
     if uploaded:
-        st.image(uploaded, caption="Preview", use_column_width=True)
+        st.image(uploaded, caption="Preview", use_container_width=True)
 
     title_input = st.text_input("Video title (optional)")
     desc_input = st.text_area("Description (optional)", height=80)
