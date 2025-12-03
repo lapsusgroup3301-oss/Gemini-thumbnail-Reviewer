@@ -256,7 +256,34 @@ Combines all signals into a single structured review:
 ### Engagement Agent  
 Predicts performance potential using a blended scoring formula.
 
+# ⚠️ API Key Setup method 2
+
+When the backend and frontend are started without a proper `.env` file, the app displays an API Key dialog.  
+This happens when:
+
+- `.env` does not exist  
+- `GEMINI_API_KEY` is missing or empty  
+
+The dialog lets the user enter the Gemini API key directly in the UI.  
+The key is stored **locally** inside the newly created `.env` file.  
+It is never uploaded, logged, transmitted, or stored anywhere else.  
+The backend reads it only from your local machine.
+
+This system prevents startup errors and ensures the app works even if someone forgets to configure the environment manually.
+
+**Short reassurance:**  
+Your key never leaves your computer. The UI only writes it into `.env` and nothing more.
+
+Manual setup is still available in the README and works the same way.
+
 ---
+### Security Note
+
+This application never sends your API key to any external server.  
+The key you enter is written only to your local `.env` file in the `root` folder.  
+The backend reads it directly from that file and uses it only for calling the Gemini API on your machine.
+
+Your API key is not transmitted over the internet at any point.
 
 # License
 
